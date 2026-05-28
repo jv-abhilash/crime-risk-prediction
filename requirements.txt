@@ -1,0 +1,27 @@
+# ============================================================
+# P25 — Two-Stage Crime Risk & Emergency Activation Pipeline
+# Requirements
+# ============================================================
+
+# Core data handling
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Machine learning
+scikit-learn>=1.1.0
+
+# Statistical diagnostics (Breusch-Pagan test)
+statsmodels>=0.13.0
+
+# Visualisation
+matplotlib>=3.6.0
+
+# Scientific computing
+scipy>=1.9.0
+
+# Jupyter notebooks (optional — for EDA exploration)
+jupyter>=1.0.0
+ipykernel>=6.0.0
+
+# Progress bars (optional — for model training loops)
+tqdm>=4.64.0
