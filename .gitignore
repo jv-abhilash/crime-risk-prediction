@@ -3,6 +3,7 @@
 # ============================================================
 
 # Virtual environment — never commit this
+.gitignore
 .venv/
 venv/
 env/

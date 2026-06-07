@@ -1,0 +1,38 @@
+P25 STAGE 2 TRAINING REPORT
+=======================================================
+Evaluation: 5-fold Stratified CV on TRAINING SET only
+Test evaluation: see p25_test_report.txt (run p25_test.py)
+
+Train rows  : 1595
+Features    : 7 D2 state features + 4 Y1_hat = 11 total
+Y2 pos rate : 15.4%  imbalance=5.5:1
+
+STAGE 2 FEATURE MATRIX COLUMNS:
+   1. state_violent_rate        ← D2 state feature
+   2. state_assault_rate        ← D2 state feature
+   3. state_murder_rate         ← D2 state feature
+   4. state_rape_rate           ← D2 state feature
+   5. state_robbery_rate        ← D2 state feature
+   6. state_property_rate       ← D2 state feature
+   7. state_population_1995     ← D2 state feature
+   8. LinReg_Y1hat              ← Stage 1 Y1_hat bridge
+   9. Ridge_Y1hat               ← Stage 1 Y1_hat bridge
+  10. RF_Y1hat                  ← Stage 1 Y1_hat bridge
+  11. GBM_Y1hat                 ← Stage 1 Y1_hat bridge
+
+Model                      CV AUC    ±std
+------------------------------------------
+LogisticRegression         0.9924  0.0054
+DecisionTree               0.9499  0.0389
+RandomForest(n=200)        0.9933  0.0081
+GradientBoosting(n=200)    0.9949  0.0065
+
+BEST MODEL : GradientBoosting(n=200)  CV AUC = 0.9949
+
+EDA DECISIONS APPLIED IN THIS SCRIPT:
+  class_weight='balanced' → LogReg, DTree, RF  (EDA: 5.5:1 imbalance, Recall would be ~0% without this)
+  sample_weight → GBM.fit()  (GBM has no class_weight param, same effect)
+  Stratified K-Fold → CV preserves 15.4% emergency rate in every fold
+  state_murder_rate log1p → applied in p25_split.py  (skew 2.77→fixed)
+  All 4 Y1_hat columns appended (Option B stacking)
+    Disagreement between models is informative signal for Stage 2

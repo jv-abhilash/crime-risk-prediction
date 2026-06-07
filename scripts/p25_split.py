@@ -29,6 +29,7 @@ Saves to data/processed/:
 
 import os
 import sys
+import re
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -36,6 +37,7 @@ from sklearn.model_selection import train_test_split
 # ── paths ───────────────────────────────────────────────────────────────────
 ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PROC = os.path.join(ROOT, "data", "processed")
+RAW_PATH  = os.path.join(ROOT, "data", "raw", "communities.data")
 S1_PATH   = os.path.join(DATA_PROC, "stage1_input.csv")
 S2_PATH   = os.path.join(DATA_PROC, "stage2_base.csv")
 
@@ -75,6 +77,64 @@ assert len(df1) == len(df2), (
     f"Row mismatch: stage1={len(df1)}, stage2={len(df2)}. "
     "Re-run p25_data_pipeline.py")
 print(f"  Row alignment: ✓ both files have {len(df1)} rows")
+
+# Preserve non-predictive identifiers for final dispatch reporting.
+# These columns are intentionally not used as model features.
+STATE_NAMES = {
+    1: "Alabama", 2: "Alaska", 4: "Arizona", 5: "Arkansas",
+    6: "California", 8: "Colorado", 9: "Connecticut", 10: "Delaware",
+    11: "District of Columbia", 12: "Florida", 13: "Georgia", 15: "Hawaii",
+    16: "Idaho", 17: "Illinois", 18: "Indiana", 19: "Iowa",
+    20: "Kansas", 21: "Kentucky", 22: "Louisiana", 23: "Maine",
+    24: "Maryland", 25: "Massachusetts", 26: "Michigan", 27: "Minnesota",
+    28: "Mississippi", 29: "Missouri", 30: "Montana", 31: "Nebraska",
+    32: "Nevada", 33: "New Hampshire", 34: "New Jersey", 35: "New Mexico",
+    36: "New York", 37: "North Carolina", 38: "North Dakota", 39: "Ohio",
+    40: "Oklahoma", 41: "Oregon", 42: "Pennsylvania", 44: "Rhode Island",
+    45: "South Carolina", 46: "South Dakota", 47: "Tennessee", 48: "Texas",
+    49: "Utah", 50: "Vermont", 51: "Virginia", 53: "Washington",
+    54: "West Virginia", 55: "Wisconsin", 56: "Wyoming",
+}
+
+def clean_community_name(name):
+    name = str(name).replace("_", " ").strip()
+    for suffix in [
+        "city", "township", "town", "borough", "village",
+        "municipality", "county", "urbancounty",
+    ]:
+        if name.lower().endswith(suffix):
+            name = name[:-len(suffix)]
+            break
+    name = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", name)
+    name = re.sub(r"\s+", " ", name).strip()
+    return name.title() if name else "Unknown"
+
+if os.path.exists(RAW_PATH):
+    raw_meta = pd.read_csv(
+        RAW_PATH,
+        header=None,
+        usecols=[0, 3],
+        names=["state_code", "community_raw"],
+        na_values=["?"],
+    )
+    assert len(raw_meta) == len(df1), (
+        f"Raw metadata row mismatch: raw={len(raw_meta)}, processed={len(df1)}")
+    metadata = pd.DataFrame({
+        "row_id": np.arange(len(raw_meta)),
+        "city": raw_meta["community_raw"].map(clean_community_name),
+        "state_code": raw_meta["state_code"].astype("Int64"),
+    })
+    metadata["state"] = metadata["state_code"].map(STATE_NAMES).fillna(
+        metadata["state_code"].astype(str)
+    )
+else:
+    print(f"  [WARN] Raw metadata not found at {RAW_PATH}")
+    metadata = pd.DataFrame({
+        "row_id": np.arange(len(df1)),
+        "city": [f"row_{i}" for i in range(len(df1))],
+        "state_code": [""] * len(df1),
+        "state": ["Unknown"] * len(df1),
+    })
 
 # ════════════════════════════════════════════════════════════════════════════
 # GENERATE INDICES — stratified on Y2 so both splits have ~15% emergency
@@ -186,6 +246,15 @@ for filename, array in saves.items():
     path = os.path.join(DATA_PROC, filename)
     np.save(path, array)
     print(f"  Saved: {filename:<30} shape={array.shape}")
+
+metadata.to_csv(os.path.join(DATA_PROC, "community_metadata_all.csv"), index=False)
+metadata.iloc[train_idx].to_csv(
+    os.path.join(DATA_PROC, "community_metadata_train.csv"), index=False)
+metadata.iloc[test_idx].to_csv(
+    os.path.join(DATA_PROC, "community_metadata_test.csv"), index=False)
+print(f"  Saved: community_metadata_all.csv      rows={len(metadata)}")
+print(f"  Saved: community_metadata_train.csv    rows={len(train_idx)}")
+print(f"  Saved: community_metadata_test.csv     rows={len(test_idx)}")
 
 print("\n" + "="*60)
 print("  Split complete!")

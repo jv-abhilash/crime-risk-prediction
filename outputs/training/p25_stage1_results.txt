@@ -1,0 +1,24 @@
+P25 STAGE 1 TRAINING REPORT
+=======================================================
+Evaluation: 5-fold CV on TRAINING SET only
+Test evaluation: see p25_test_report.txt (run p25_test.py)
+
+Train rows : 1595
+Features   : 100
+
+Model                        Target    CV R²    ±std
+----------------------------------------------------
+LinearRegression          log1p(Y1)   0.6542  0.0513
+Ridge(alpha=1.0)          log1p(Y1)   0.6606  0.0475
+RandomForest(n=200)          raw Y1   0.6268  0.0491
+GradientBoosting(n=200)      raw Y1   0.6334  0.0440
+
+BEST MODEL : Ridge(alpha=1.0)  CV R² = 0.6606
+
+EDA DECISIONS APPLIED IN THIS SCRIPT:
+  LR + Ridge → log1p(Y1) target  (EDA: skew=1.52, BP p=7.71e-58)
+  RF + GBM   → raw Y1 target     (immune to skew, no transform needed)
+  log1p reversed via expm1() before saving — all Y1_hat in [0,1]
+  Ridge alpha=1.0 → L2 addresses 12 multicollinear pairs (EDA Check 4)
+  RF min_samples_split=5 → outlier protection
+  GBM subsample=0.8 → reduces outlier influence per tree

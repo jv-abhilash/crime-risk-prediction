@@ -11,16 +11,18 @@ Loads the best Stage 2 model's predictions and runs:
 Run AFTER p25_train2.py:
     python scripts/p25_evaluate.py
 
-Saves to outputs/p25_outputs/:
+Saves to outputs/evaluation/ and outputs/reports/:
     p25_threshold_sweep.png
     p25_calibration.png
     p25_dispatch_cost.png
+    p25_final_dispatch_tiers.csv
     p25_final_report.txt
 =============================================================================
 """
 
 import os, sys
 import numpy as np
+import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -38,10 +40,28 @@ from sklearn.utils.class_weight import compute_sample_weight
 # ── paths ───────────────────────────────────────────────────────────────────
 ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PROC = os.path.join(ROOT, "data", "processed")
-OUT_DIR   = os.path.join(ROOT, "outputs", "p25_outputs")
-os.makedirs(OUT_DIR, exist_ok=True)
+EVAL_DIR  = os.path.join(ROOT, "outputs", "evaluation")
+REPORT_DIR = os.path.join(ROOT, "outputs", "reports")
+os.makedirs(EVAL_DIR, exist_ok=True)
+os.makedirs(REPORT_DIR, exist_ok=True)
 
 CB = "#2E75B6"; CG = "#1E5C2E"; CR = "#9B1C1C"; CO = "#C55A11"; CP = "#5B2C8D"
+
+STATE_NAMES = {
+    1: "Alabama", 2: "Alaska", 4: "Arizona", 5: "Arkansas",
+    6: "California", 8: "Colorado", 9: "Connecticut", 10: "Delaware",
+    11: "District of Columbia", 12: "Florida", 13: "Georgia", 15: "Hawaii",
+    16: "Idaho", 17: "Illinois", 18: "Indiana", 19: "Iowa",
+    20: "Kansas", 21: "Kentucky", 22: "Louisiana", 23: "Maine",
+    24: "Maryland", 25: "Massachusetts", 26: "Michigan", 27: "Minnesota",
+    28: "Mississippi", 29: "Missouri", 30: "Montana", 31: "Nebraska",
+    32: "Nevada", 33: "New Hampshire", 34: "New Jersey", 35: "New Mexico",
+    36: "New York", 37: "North Carolina", 38: "North Dakota", 39: "Ohio",
+    40: "Oklahoma", 41: "Oregon", 42: "Pennsylvania", 44: "Rhode Island",
+    45: "South Carolina", 46: "South Dakota", 47: "Tennessee", 48: "Texas",
+    49: "Utah", 50: "Vermont", 51: "Virginia", 53: "Washington",
+    54: "West Virginia", 55: "Wisconsin", 56: "Wyoming",
+}
 
 def load(name):
     path = os.path.join(DATA_PROC, f"{name}.npy")
@@ -51,10 +71,65 @@ def load(name):
     return np.load(path, allow_pickle=True)
 
 def save_fig(fig, name):
-    path = os.path.join(OUT_DIR, name)
+    path = os.path.join(EVAL_DIR, name)
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  [SAVED] {name}")
+
+def clean_community_name(name):
+    import re
+    name = str(name).replace("_", " ").strip()
+    for suffix in [
+        "city", "township", "town", "borough", "village",
+        "municipality", "county", "urbancounty",
+    ]:
+        if name.lower().endswith(suffix):
+            name = name[:-len(suffix)]
+            break
+    name = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", name)
+    name = re.sub(r"\s+", " ", name).strip()
+    return name.title() if name else "Unknown"
+
+def load_test_metadata(n_rows):
+    meta_path = os.path.join(DATA_PROC, "community_metadata_test.csv")
+    if os.path.exists(meta_path):
+        metadata = pd.read_csv(meta_path)
+        if len(metadata) == n_rows:
+            return metadata.reset_index(drop=True)
+
+    raw_path = os.path.join(ROOT, "data", "raw", "communities.data")
+    test_idx_path = os.path.join(DATA_PROC, "test_idx.npy")
+    if not os.path.exists(raw_path) or not os.path.exists(test_idx_path):
+        return pd.DataFrame({
+            "row_id": np.arange(n_rows),
+            "city": [f"test_row_{i}" for i in range(n_rows)],
+            "state": ["Unknown"] * n_rows,
+        })
+
+    test_idx = np.load(test_idx_path, allow_pickle=True)
+    raw_meta = pd.read_csv(
+        raw_path,
+        header=None,
+        usecols=[0, 3],
+        names=["state_code", "community_raw"],
+        na_values=["?"],
+    )
+    metadata = pd.DataFrame({
+        "row_id": np.arange(len(raw_meta)),
+        "city": raw_meta["community_raw"].map(clean_community_name),
+        "state_code": raw_meta["state_code"].astype("Int64"),
+    })
+    metadata["state"] = metadata["state_code"].map(STATE_NAMES).fillna(
+        metadata["state_code"].astype(str)
+    )
+    metadata = metadata.iloc[test_idx].reset_index(drop=True)
+    if len(metadata) != n_rows:
+        return pd.DataFrame({
+            "row_id": np.arange(n_rows),
+            "city": [f"test_row_{i}" for i in range(n_rows)],
+            "state": ["Unknown"] * n_rows,
+        })
+    return metadata
 
 print("\n" + "="*60)
 print("  P25 — Evaluation & Production Layers")
@@ -105,6 +180,42 @@ for name, clf in clf_configs:
 best_name  = max(all_probas, key=lambda k: roc_auc_score(Y2_test, all_probas[k]))
 best_proba = all_probas[best_name]
 print(f"\n  Best model for evaluation: {best_name}")
+
+# Rebuild Stage 1 test performance to state clearly which Stage 1 model won.
+X1_train     = load("X1_train")
+X1_test      = load("X1_test")
+Y1_train_raw = load("Y1_train_raw")
+Y1_train_log = load("Y1_train_log")
+Y1_test_raw  = load("Y1_test_raw")
+
+from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+
+s1_configs = [
+    ("LinearRegression", LinearRegression(), "log"),
+    ("Ridge(alpha=1.0)", Ridge(alpha=1.0), "log"),
+    ("RandomForest", RandomForestRegressor(
+        n_estimators=200, min_samples_split=5, n_jobs=-1, random_state=42
+    ), "raw"),
+    ("GradientBoosting", GradientBoostingRegressor(
+        n_estimators=200, learning_rate=0.05, max_depth=4,
+        subsample=0.8, random_state=42
+    ), "raw"),
+]
+s1_scores = {}
+for name, model, target in s1_configs:
+    y_tr = Y1_train_log if target == "log" else Y1_train_raw
+    model.fit(X1_train, y_tr)
+    hat = model.predict(X1_test)
+    if target == "log":
+        hat = np.clip(np.expm1(hat), 0, 1)
+    s1_scores[name] = r2_score(Y1_test_raw, hat)
+
+best_stage1_name = max(s1_scores, key=s1_scores.get)
+best_stage1_r2 = s1_scores[best_stage1_name]
+print(f"  Best Stage 1 model      : {best_stage1_name} "
+      f"(highest Test R² among 4 Stage 1 models)")
 
 # ════════════════════════════════════════════════════════════════════════════
 # THRESHOLD SWEEP
@@ -319,6 +430,25 @@ print(f"  Threshold L1 (P≥{TIER_L1}) : {dispatch_counts['Level-1: Full Deploym
 print(f"  Threshold L2 (P≥{TIER_L2}) : {dispatch_counts['Level-2: Standby']:>4} communities")
 print(f"  Standard     (P<{TIER_L2})  : {dispatch_counts['Standard Patrol']:>4} communities")
 
+test_metadata = load_test_metadata(len(Y2_test))
+dispatch_table = test_metadata[["city", "state"]].copy()
+dispatch_table["p_emergency"] = best_proba
+dispatch_table["dispatch_tier"] = dispatch_decisions
+dispatch_table["actual_emergency"] = Y2_test
+dispatch_table["tier_rank"] = dispatch_table["dispatch_tier"].map({
+    "Level-1: Full Deployment": 1,
+    "Level-2: Standby": 2,
+    "Standard Patrol": 3,
+})
+dispatch_table = dispatch_table.sort_values(
+    ["tier_rank", "p_emergency", "state", "city"],
+    ascending=[True, False, True, True],
+).drop(columns=["tier_rank"])
+
+dispatch_csv = os.path.join(REPORT_DIR, "p25_final_dispatch_tiers.csv")
+dispatch_table.to_csv(dispatch_csv, index=False)
+print(f"  [SAVED] p25_final_dispatch_tiers.csv")
+
 # How well does each tier match the actual emergency labels?
 best_preds = (best_proba >= best_f1_thr).astype(int)
 final_auc  = roc_auc_score(Y2_test, best_proba)
@@ -329,6 +459,13 @@ final_rec  = recall_score(Y2_test, best_preds)
 lines = [
     "P25 FINAL EVALUATION REPORT",
     "="*60,
+    "MODEL SELECTION USED FOR FINAL OUTPUT:",
+    f"  Stage 1 winner     : {best_stage1_name}  "
+    f"(highest Test R² = {best_stage1_r2:.4f} among 4 Stage 1 models)",
+    f"  Stage 2 winner     : {best_name}  "
+    f"(highest Test AUC on held-out test set among 4 Stage 2 models)",
+    f"  Final dispatch tiers below are generated from the Stage 2 winner: {best_name}",
+    "",
     f"Best Stage 2 model   : {best_name}",
     f"Final AUC            : {final_auc:.4f}",
     f"Final F1             : {final_f1:.4f}  (at threshold {best_f1_thr:.2f})",
@@ -361,13 +498,20 @@ lines += [
     f"  Standard Patrol         : "
     f"{dispatch_counts['Standard Patrol']} communities",
     "",
+    "DISPATCH TIER TABLE (test set):",
+    dispatch_table.assign(
+        p_emergency=dispatch_table["p_emergency"].map(lambda x: f"{x:.4f}")
+    )[["city", "state", "dispatch_tier", "p_emergency",
+       "actual_emergency"]].to_string(index=False),
+    "",
     "OUTPUTS SAVED:",
     "  p25_threshold_sweep.png",
     "  p25_calibration.png",
     "  p25_dispatch_cost.png",
+    "  p25_final_dispatch_tiers.csv",
     "  p25_final_report.txt",
 ]
-report_path = os.path.join(OUT_DIR, "p25_final_report.txt")
+report_path = os.path.join(REPORT_DIR, "p25_final_report.txt")
 with open(report_path, "w") as f:
     f.write("\n".join(lines))
 print(f"  [SAVED] p25_final_report.txt")
@@ -377,7 +521,9 @@ print("  Evaluation complete!")
 print()
 print(f"  Final AUC    : {final_auc:.4f}")
 print(f"  Final Recall : {final_rec:.4f}")
-print(f"  Best model   : {best_name}")
+print(f"  Best Stage 1 : {best_stage1_name}  R²={best_stage1_r2:.4f}")
+print(f"  Best Stage 2 : {best_name}")
 print()
-print("  All outputs → outputs/p25_outputs/")
+print("  Evaluation plots → outputs/evaluation/")
+print("  Final reports    → outputs/reports/")
 print("="*60 + "\n")

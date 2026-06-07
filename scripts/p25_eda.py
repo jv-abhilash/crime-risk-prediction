@@ -8,7 +8,7 @@ pipeline depends on and ends with a GO / NO-GO training verdict.
 Usage (from project root, venv active):
     python scripts/p25_eda.py
 
-Outputs  →  outputs/p25_outputs/
+Outputs  →  outputs/eda/
     p25_eda_01_missing_values.png
     p25_eda_02_y1_distribution.png
     p25_eda_03_y2_class_balance.png
@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT       = os.path.dirname(SCRIPT_DIR)
 DATA_DIR   = os.path.join(ROOT, "data", "processed")
-OUT_DIR    = os.path.join(ROOT, "outputs", "p25_outputs")
+OUT_DIR    = os.path.join(ROOT, "outputs", "eda")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def save(fig, name):
@@ -708,5 +708,5 @@ spath = os.path.join(OUT_DIR, "p25_eda_summary.txt")
 with open(spath, "w") as f:
     f.write("\n".join(lines))
 print(f"\n  [SAVED] p25_eda_summary.txt")
-print(f"\n  All outputs → outputs/p25_outputs/")
+print(f"\n  All outputs → outputs/eda/")
 print("="*65 + "\n")

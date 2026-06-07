@@ -1,0 +1,436 @@
+P25 FINAL EVALUATION REPORT
+============================================================
+MODEL SELECTION USED FOR FINAL OUTPUT:
+  Stage 1 winner     : GradientBoosting  (highest Test R² = 0.6970 among 4 Stage 1 models)
+  Stage 2 winner     : LogisticRegression  (highest Test AUC on held-out test set among 4 Stage 2 models)
+  Final dispatch tiers below are generated from the Stage 2 winner: LogisticRegression
+
+Best Stage 2 model   : LogisticRegression
+Final AUC            : 0.9328
+Final F1             : 0.7407  (at threshold 0.61)
+Final Recall         : 0.8065  (catching 80.6% of emergencies)
+
+THRESHOLD ANALYSIS:
+  Best F1 threshold    : 0.61  (F1=0.7407, Recall=0.8065)
+  Recall≥0.90 threshold: 0.05  (Precision=0.3333)
+
+DISPATCH COST MODEL:
+  FN penalty (missed emergency) : 10×
+  FP penalty (false alarm)      : 1×
+  Min-cost threshold            : 0.27
+  Min total cost                : 108
+  At min-cost: 6 FN + 48 FP
+
+DISPATCH TIER DISTRIBUTION (test set, business thresholds 0.80/0.50):
+  Level-1 Full Deployment : 58 communities
+  Level-2 Standby         : 21 communities
+  Standard Patrol         : 320 communities
+
+DISPATCH TIER TABLE (test set):
+                 city                state            dispatch_tier p_emergency  actual_emergency
+          Fort Pierce              Florida Level-1: Full Deployment      0.9997                 1
+           Washington District of Columbia Level-1: Full Deployment      0.9996                 1
+                Miami              Florida Level-1: Full Deployment      0.9996                 1
+            Inglewood           California Level-1: Full Deployment      0.9993                 1
+             Richmond           California Level-1: Full Deployment      0.9993                 1
+         College Park              Georgia Level-1: Full Deployment      0.9981                 1
+        New Brunswick           New Jersey Level-1: Full Deployment      0.9955                 1
+        Pompano Beach              Florida Level-1: Full Deployment      0.9938                 1
+           Sacramento           California Level-1: Full Deployment      0.9920                 1
+            Greenwood          Mississippi Level-1: Full Deployment      0.9917                 0
+          Coatesville         Pennsylvania Level-1: Full Deployment      0.9856                 0
+           Wilmington       North Carolina Level-1: Full Deployment      0.9835                 1
+               Fresno           California Level-1: Full Deployment      0.9820                 1
+             Leesburg              Florida Level-1: Full Deployment      0.9812                 1
+     North Charleston       South Carolina Level-1: Full Deployment      0.9782                 1
+           Montebello           California Level-1: Full Deployment      0.9777                 1
+ Warrensville Heights                 Ohio Level-1: Full Deployment      0.9768                 0
+         Mount Vernon             New York Level-1: Full Deployment      0.9768                 1
+           Greenville       South Carolina Level-1: Full Deployment      0.9756                 1
+               Denver             Colorado Level-1: Full Deployment      0.9663                 0
+         Indianapolis              Indiana Level-1: Full Deployment      0.9631                 1
+          Pico Rivera           California Level-1: Full Deployment      0.9576                 1
+           Alexandria            Louisiana Level-1: Full Deployment      0.9563                 1
+            Annapolis             Maryland Level-1: Full Deployment      0.9528                 1
+          Wilkinsburg         Pennsylvania Level-1: Full Deployment      0.9523                 1
+               Wilson       North Carolina Level-1: Full Deployment      0.9423                 1
+          Hattiesburg          Mississippi Level-1: Full Deployment      0.9354                 0
+               Eunice            Louisiana Level-1: Full Deployment      0.9338                 1
+              Newport             Kentucky Level-1: Full Deployment      0.9325                 0
+            Elizabeth           New Jersey Level-1: Full Deployment      0.9301                 1
+               Pomona           California Level-1: Full Deployment      0.9286                 1
+         Baldwin Park           California Level-1: Full Deployment      0.9274                 0
+             Beaumont                Texas Level-1: Full Deployment      0.9257                 1
+          Chattanooga            Tennessee Level-1: Full Deployment      0.9244                 1
+                Azusa           California Level-1: Full Deployment      0.9231                 0
+            Fairfield              Alabama Level-1: Full Deployment      0.9229                 1
+           Tuscaloosa              Alabama Level-1: Full Deployment      0.9119                 1
+            Brunswick              Georgia Level-1: Full Deployment      0.9082                 1
+              Seattle           Washington Level-1: Full Deployment      0.9022                 1
+             Syracuse             New York Level-1: Full Deployment      0.8973                 0
+             Rosemead           California Level-1: Full Deployment      0.8955                 1
+          Port Arthur                Texas Level-1: Full Deployment      0.8921                 1
+                Indio           California Level-1: Full Deployment      0.8836                 0
+       South El Monte           California Level-1: Full Deployment      0.8822                 1
+               Bartow              Florida Level-1: Full Deployment      0.8812                 1
+       Elizabeth City       North Carolina Level-1: Full Deployment      0.8635                 0
+              Terrell                Texas Level-1: Full Deployment      0.8445                 0
+               Monroe       North Carolina Level-1: Full Deployment      0.8443                 0
+                Greer       South Carolina Level-1: Full Deployment      0.8425                 1
+              Fontana           California Level-1: Full Deployment      0.8400                 1
+                 Waco                Texas Level-1: Full Deployment      0.8320                 1
+            Vicksburg          Mississippi Level-1: Full Deployment      0.8288                 0
+            San Diego           California Level-1: Full Deployment      0.8282                 1
+             Alhambra           California Level-1: Full Deployment      0.8270                 0
+              Beckley        West Virginia Level-1: Full Deployment      0.8186                 1
+            Texarkana                Texas Level-1: Full Deployment      0.8161                 1
+            Rock Hill       South Carolina Level-1: Full Deployment      0.8131                 1
+          Watsonville           California Level-1: Full Deployment      0.8052                 1
+          Thomasville              Georgia         Level-2: Standby      0.7972                 0
+            Pittsburg           California         Level-2: Standby      0.7909                 0
+           Greenville       North Carolina         Level-2: Standby      0.7717                 1
+           Hagerstown             Maryland         Level-2: Standby      0.7587                 0
+         Natchitoches            Louisiana         Level-2: Standby      0.7179                 0
+           Marysville           California         Level-2: Standby      0.7144                 1
+                 Rome              Georgia         Level-2: Standby      0.6932                 1
+          Panama City              Florida         Level-2: Standby      0.6914                 0
+                Utica             New York         Level-2: Standby      0.6778                 0
+          Albuquerque           New Mexico         Level-2: Standby      0.6728                 1
+          Brownsville                Texas         Level-2: Standby      0.6709                 0
+             Newberry       South Carolina         Level-2: Standby      0.6595                 1
+           Greensboro       North Carolina         Level-2: Standby      0.6356                 0
+           High Point       North Carolina         Level-2: Standby      0.6325                 1
+          Blytheville             Arkansas         Level-2: Standby      0.6161                 1
+      University City             Missouri         Level-2: Standby      0.6070                 0
+                Kelso           Washington         Level-2: Standby      0.6022                 0
+         Hopkinsville             Kentucky         Level-2: Standby      0.5831                 0
+            Vancouver           Washington         Level-2: Standby      0.5443                 0
+          West Monroe            Louisiana         Level-2: Standby      0.5380                 0
+           Reidsville       North Carolina         Level-2: Standby      0.5190                 0
+          Shelbyville            Tennessee          Standard Patrol      0.4920                 0
+          Casa Grande              Arizona          Standard Patrol      0.4646                 1
+       Corpus Christi                Texas          Standard Patrol      0.4200                 0
+              Baytown                Texas          Standard Patrol      0.4184                 0
+              Hickory       North Carolina          Standard Patrol      0.4100                 0
+            Davenport                 Iowa          Standard Patrol      0.3987                 1
+            Fitchburg        Massachusetts          Standard Patrol      0.3890                 1
+             El Cajon           California          Standard Patrol      0.3840                 0
+            Allentown         Pennsylvania          Standard Patrol      0.3770                 0
+          Terre Haute              Indiana          Standard Patrol      0.3659                 0
+          Forest Park              Georgia          Standard Patrol      0.3583                 1
+          Mount Holly           New Jersey          Standard Patrol      0.3557                 1
+              Visalia           California          Standard Patrol      0.3551                 0
+             Aberdeen             Maryland          Standard Patrol      0.3549                 0
+              Barstow           California          Standard Patrol      0.3464                 0
+              Concord       North Carolina          Standard Patrol      0.3209                 0
+            Yuba City           California          Standard Patrol      0.3204                 0
+            Escondido           California          Standard Patrol      0.3112                 0
+           Waxahachie                Texas          Standard Patrol      0.3071                 0
+ Palos Verdes Estates           California          Standard Patrol      0.3028                 0
+               Downey           California          Standard Patrol      0.3023                 0
+             Sandusky                 Ohio          Standard Patrol      0.2988                 0
+               Deming           New Mexico          Standard Patrol      0.2922                 0
+             Columbia             Missouri          Standard Patrol      0.2876                 0
+                Hobbs           New Mexico          Standard Patrol      0.2715                 1
+           Statesboro              Georgia          Standard Patrol      0.2700                 0
+             Victoria                Texas          Standard Patrol      0.2553                 0
+               Corona           California          Standard Patrol      0.2470                 0
+            La Quinta           California          Standard Patrol      0.2451                 0
+              Antioch           California          Standard Patrol      0.2325                 0
+           Morristown           New Jersey          Standard Patrol      0.2324                 0
+        North Augusta       South Carolina          Standard Patrol      0.2318                 0
+         Hillsborough           California          Standard Patrol      0.2250                 0
+               Juneau               Alaska          Standard Patrol      0.2226                 0
+            Bremerton           Washington          Standard Patrol      0.2182                 0
+           Somerville        Massachusetts          Standard Patrol      0.2152                 0
+           Cumberland             Maryland          Standard Patrol      0.2120                 0
+                Ogden                 Utah          Standard Patrol      0.2114                 0
+            Bluefield        West Virginia          Standard Patrol      0.2027                 0
+           Fall River        Massachusetts          Standard Patrol      0.2012                 0
+             Glendale           California          Standard Patrol      0.2003                 0
+             Magnolia             Arkansas          Standard Patrol      0.1974                 0
+          Palm Desert           California          Standard Patrol      0.1936                 0
+               Humble                Texas          Standard Patrol      0.1889                 0
+             Danville             Kentucky          Standard Patrol      0.1720                 0
+                Ceres           California          Standard Patrol      0.1701                 0
+               Yeadon         Pennsylvania          Standard Patrol      0.1617                 0
+            Weehawken           New Jersey          Standard Patrol      0.1599                 0
+             Aberdeen           Washington          Standard Patrol      0.1599                 0
+            Pawtucket         Rhode Island          Standard Patrol      0.1591                 0
+             Beeville                Texas          Standard Patrol      0.1550                 0
+             Piedmont           California          Standard Patrol      0.1527                 0
+      New Port Richey              Florida          Standard Patrol      0.1473                 0
+               Beacon             New York          Standard Patrol      0.1465                 0
+               Jasper              Alabama          Standard Patrol      0.1463                 1
+            Red Bluff           California          Standard Patrol      0.1446                 0
+               Smyrna            Tennessee          Standard Patrol      0.1438                 0
+               Denton                Texas          Standard Patrol      0.1414                 0
+              Dunkirk             New York          Standard Patrol      0.1390                 0
+                Miami             Oklahoma          Standard Patrol      0.1257                 0
+      Gloucester City           New Jersey          Standard Patrol      0.1248                 0
+               Laurel             Maryland          Standard Patrol      0.1246                 0
+           Pottsville         Pennsylvania          Standard Patrol      0.1244                 0
+             Milpitas           California          Standard Patrol      0.1238                 0
+     North Lauderdale              Florida          Standard Patrol      0.1234                 0
+           New Castle         Pennsylvania          Standard Patrol      0.1233                 0
+           Kingsville                Texas          Standard Patrol      0.1228                 0
+           Sweetwater                Texas          Standard Patrol      0.1217                 0
+             La Habra           California          Standard Patrol      0.1201                 0
+               Tustin           California          Standard Patrol      0.1171                 0
+              Manteca           California          Standard Patrol      0.1122                 0
+               Renton           Washington          Standard Patrol      0.1074                 0
+           San Angelo                Texas          Standard Patrol      0.1049                 0
+               Sparks               Nevada          Standard Patrol      0.1026                 0
+          Carpinteria           California          Standard Patrol      0.1015                 0
+                 Kent           Washington          Standard Patrol      0.0966                 0
+              Lebanon         Pennsylvania          Standard Patrol      0.0958                 0
+          Culver City           California          Standard Patrol      0.0949                 0
+             Harrison           New Jersey          Standard Patrol      0.0933                 0
+               Orange           California          Standard Patrol      0.0931                 0
+               Ithaca             New York          Standard Patrol      0.0914                 0
+         Mc Minnville            Tennessee          Standard Patrol      0.0873                 0
+               Fulton             Missouri          Standard Patrol      0.0860                 0
+        Pinellas Park              Florida          Standard Patrol      0.0844                 0
+            Vacaville           California          Standard Patrol      0.0829                 0
+                Tempe              Arizona          Standard Patrol      0.0723                 0
+           Middletown          Connecticut          Standard Patrol      0.0713                 0
+               Snyder                Texas          Standard Patrol      0.0704                 0
+              Winslow           New Jersey          Standard Patrol      0.0693                 0
+             Lewiston                Maine          Standard Patrol      0.0679                 0
+             Carlsbad           California          Standard Patrol      0.0648                 0
+              Everett        Massachusetts          Standard Patrol      0.0642                 1
+             Lawrence              Indiana          Standard Patrol      0.0639                 0
+         Miami Shores              Florida          Standard Patrol      0.0630                 1
+                Salem        Massachusetts          Standard Patrol      0.0606                 0
+      San Luis Obispo           California          Standard Patrol      0.0575                 0
+         Jacksonville              Alabama          Standard Patrol      0.0537                 0
+               Linden           New Jersey          Standard Patrol      0.0503                 0
+            Oak Ridge            Tennessee          Standard Patrol      0.0494                 0
+            San Bruno           California          Standard Patrol      0.0483                 0
+        Beverly Hills           California          Standard Patrol      0.0482                 0
+              Bristol         Pennsylvania          Standard Patrol      0.0473                 0
+            Rockledge              Florida          Standard Patrol      0.0471                 0
+            Kennewick           Washington          Standard Patrol      0.0467                 0
+       Virginia Beach             Virginia          Standard Patrol      0.0463                 0
+         Phillipsburg           New Jersey          Standard Patrol      0.0440                 0
+          Simi Valley           California          Standard Patrol      0.0435                 0
+           Georgetown                Texas          Standard Patrol      0.0433                 0
+             Leesburg             Virginia          Standard Patrol      0.0432                 0
+            Van Buren             Arkansas          Standard Patrol      0.0402                 0
+           Bellingham           Washington          Standard Patrol      0.0390                 0
+              Margate              Florida          Standard Patrol      0.0369                 0
+             Palm Bay              Florida          Standard Patrol      0.0362                 0
+             Richland           Washington          Standard Patrol      0.0359                 0
+           Gloucester        Massachusetts          Standard Patrol      0.0356                 1
+         Mount Vernon           Washington          Standard Patrol      0.0354                 0
+           Waynesboro             Virginia          Standard Patrol      0.0352                 0
+         Gloversville             New York          Standard Patrol      0.0342                 0
+         Connersville              Indiana          Standard Patrol      0.0333                 0
+               Irvine           California          Standard Patrol      0.0323                 0
+           El Segundo           California          Standard Patrol      0.0321                 0
+             Fort Lee           New Jersey          Standard Patrol      0.0318                 0
+           Northglenn             Colorado          Standard Patrol      0.0317                 0
+              Clinton        Massachusetts          Standard Patrol      0.0316                 0
+        Copperas Cove                Texas          Standard Patrol      0.0313                 0
+             Red Bank            Tennessee          Standard Patrol      0.0308                 0
+     Columbia Heights            Minnesota          Standard Patrol      0.0307                 0
+          Casselberry              Florida          Standard Patrol      0.0302                 0
+          Foster City           California          Standard Patrol      0.0299                 0
+              Astoria               Oregon          Standard Patrol      0.0291                 0
+             Deptford           New Jersey          Standard Patrol      0.0285                 0
+         Sierra Vista              Arizona          Standard Patrol      0.0285                 0
+        Arroyo Grande           California          Standard Patrol      0.0281                 0
+           Ponca City             Oklahoma          Standard Patrol      0.0268                 0
+              Schertz                Texas          Standard Patrol      0.0264                 0
+              Sedalia             Missouri          Standard Patrol      0.0260                 0
+           Greenfield        Massachusetts          Standard Patrol      0.0253                 1
+               Daphne              Alabama          Standard Patrol      0.0248                 0
+        Coral Springs              Florida          Standard Patrol      0.0247                 0
+               Kearny           New Jersey          Standard Patrol      0.0237                 0
+              Ashland             Kentucky          Standard Patrol      0.0236                 0
+            Claremont        New Hampshire          Standard Patrol      0.0235                 0
+             Kirkland           Washington          Standard Patrol      0.0227                 0
+               Oswego             New York          Standard Patrol      0.0226                 0
+       Temple Terrace              Florida          Standard Patrol      0.0226                 0
+            Deer Park                Texas          Standard Patrol      0.0225                 0
+           Springdale                 Ohio          Standard Patrol      0.0225                 0
+         Walnut Creek           California          Standard Patrol      0.0221                 0
+             Randolph        Massachusetts          Standard Patrol      0.0218                 0
+           Canon City             Colorado          Standard Patrol      0.0212                 0
+               Tooele                 Utah          Standard Patrol      0.0212                 0
+         Sierra Madre           California          Standard Patrol      0.0210                 0
+                Hurst                Texas          Standard Patrol      0.0208                 0
+   Palm Beach Gardens              Florida          Standard Patrol      0.0205                 0
+              Brandon          Mississippi          Standard Patrol      0.0202                 0
+                 Brea           California          Standard Patrol      0.0194                 0
+             Berkeley           New Jersey          Standard Patrol      0.0190                 0
+              Madison                 Ohio          Standard Patrol      0.0187                 0
+           Greenfield              Indiana          Standard Patrol      0.0183                 0
+              Lebanon                 Ohio          Standard Patrol      0.0179                 0
+            Edgewater              Florida          Standard Patrol      0.0176                 0
+         Stephenville                Texas          Standard Patrol      0.0173                 0
+              Milford        Massachusetts          Standard Patrol      0.0170                 0
+        Missouri City                Texas          Standard Patrol      0.0169                 0
+             Stafford           New Jersey          Standard Patrol      0.0167                 0
+           Waterville                Maine          Standard Patrol      0.0165                 0
+       Mount Pleasant       South Carolina          Standard Patrol      0.0164                 0
+             Oil City         Pennsylvania          Standard Patrol      0.0163                 0
+            Green Bay            Wisconsin          Standard Patrol      0.0156                 0
+     Upper Chichester         Pennsylvania          Standard Patrol      0.0152                 0
+        Mission Viejo           California          Standard Patrol      0.0152                 0
+               Berlin        New Hampshire          Standard Patrol      0.0150                 0
+                Plano                Texas          Standard Patrol      0.0149                 0
+              Gilbert              Arizona          Standard Patrol      0.0148                 0
+              Bucyrus                 Ohio          Standard Patrol      0.0146                 0
+               Vernon          Connecticut          Standard Patrol      0.0144                 0
+           Manchester          Connecticut          Standard Patrol      0.0143                 0
+              Amherst                 Ohio          Standard Patrol      0.0143                 0
+            Pocatello                Idaho          Standard Patrol      0.0142                 0
+     Saratoga Springs             New York          Standard Patrol      0.0141                 1
+             Puyallup           Washington          Standard Patrol      0.0141                 0
+              Sanford                Maine          Standard Patrol      0.0140                 0
+             Marietta                 Ohio          Standard Patrol      0.0140                 0
+        Safety Harbor              Florida          Standard Patrol      0.0138                 0
+           Manchester           New Jersey          Standard Patrol      0.0136                 0
+              Redmond           Washington          Standard Patrol      0.0135                 0
+         Merrillville              Indiana          Standard Patrol      0.0133                 0
+            La Crosse            Wisconsin          Standard Patrol      0.0132                 0
+              Laramie              Wyoming          Standard Patrol      0.0129                 0
+                Provo                 Utah          Standard Patrol      0.0127                 0
+               Pierre         South Dakota          Standard Patrol      0.0127                 0
+              Wooster                 Ohio          Standard Patrol      0.0126                 0
+          Yorba Linda           California          Standard Patrol      0.0126                 0
+            Braintree        Massachusetts          Standard Patrol      0.0124                 0
+             Benbrook                Texas          Standard Patrol      0.0123                 0
+          Friendswood                Texas          Standard Patrol      0.0118                 0
+                Falls         Pennsylvania          Standard Patrol      0.0118                 0
+      Manhattan Beach           California          Standard Patrol      0.0114                 0
+          Green River              Wyoming          Standard Patrol      0.0112                 0
+                Dover           New Jersey          Standard Patrol      0.0112                 0
+            Greenwood              Indiana          Standard Patrol      0.0112                 0
+           Blacksburg             Virginia          Standard Patrol      0.0109                 0
+          Bergenfield           New Jersey          Standard Patrol      0.0109                 0
+      North Brunswick           New Jersey          Standard Patrol      0.0108                 0
+              Grafton        Massachusetts          Standard Patrol      0.0106                 0
+            Nanticoke         Pennsylvania          Standard Patrol      0.0105                 0
+     Rockville Centre             New York          Standard Patrol      0.0104                 0
+               Hudson        Massachusetts          Standard Patrol      0.0102                 0
+            Westbrook                Maine          Standard Patrol      0.0102                 0
+     Colonial Heights             Virginia          Standard Patrol      0.0099                 0
+            Grapevine                Texas          Standard Patrol      0.0099                 0
+                Boone                 Iowa          Standard Patrol      0.0098                 0
+         Presque Isle                Maine          Standard Patrol      0.0098                 0
+       West Hempfield         Pennsylvania          Standard Patrol      0.0098                 0
+Parsippany-Troy Hills           New Jersey          Standard Patrol      0.0093                 0
+            Fairfield                 Ohio          Standard Patrol      0.0092                 0
+             Sandwich        Massachusetts          Standard Patrol      0.0091                 0
+            Middleton            Wisconsin          Standard Patrol      0.0091                 0
+           Foxborough        Massachusetts          Standard Patrol      0.0089                 0
+           Plainville          Connecticut          Standard Patrol      0.0087                 0
+              Milford          Connecticut          Standard Patrol      0.0086                 0
+                Perry                 Ohio          Standard Patrol      0.0086                 0
+               Hoover              Alabama          Standard Patrol      0.0086                 0
+ South Orange Village           New Jersey          Standard Patrol      0.0085                 0
+          Noblesville              Indiana          Standard Patrol      0.0085                 0
+             Kirkwood             Missouri          Standard Patrol      0.0084                 0
+              Oshkosh            Wisconsin          Standard Patrol      0.0084                 0
+                Minot         North Dakota          Standard Patrol      0.0084                 0
+           Valparaiso              Indiana          Standard Patrol      0.0083                 0
+            Indianola                 Iowa          Standard Patrol      0.0083                 0
+           Pennsville           New Jersey          Standard Patrol      0.0082                 0
+             Sterling             Colorado          Standard Patrol      0.0082                 0
+           Fonddu Lac            Wisconsin          Standard Patrol      0.0082                 0
+         Lower Paxton         Pennsylvania          Standard Patrol      0.0081                 0
+               Milton        Massachusetts          Standard Patrol      0.0079                 0
+             Bartlett            Tennessee          Standard Patrol      0.0079                 0
+               Murray             Kentucky          Standard Patrol      0.0079                 0
+               Monroe            Wisconsin          Standard Patrol      0.0079                 0
+       Mount Pleasant            Wisconsin          Standard Patrol      0.0078                 0
+              Danvers        Massachusetts          Standard Patrol      0.0078                 0
+         South Hadley        Massachusetts          Standard Patrol      0.0076                 0
+            Maplewood           New Jersey          Standard Patrol      0.0076                 0
+            Tallmadge                 Ohio          Standard Patrol      0.0076                 0
+           Plainfield              Indiana          Standard Patrol      0.0074                 0
+            Greenwich          Connecticut          Standard Patrol      0.0074                 0
+             Bismarck         North Dakota          Standard Patrol      0.0074                 0
+                Aston         Pennsylvania          Standard Patrol      0.0074                 0
+              Enfield          Connecticut          Standard Patrol      0.0073                 0
+        Windsor Locks          Connecticut          Standard Patrol      0.0071                 0
+            Williston         North Dakota          Standard Patrol      0.0071                 0
+                Ocean           New Jersey          Standard Patrol      0.0071                 0
+                Fargo         North Dakota          Standard Patrol      0.0070                 0
+          Creve Coeur             Missouri          Standard Patrol      0.0069                 0
+             Scituate        Massachusetts          Standard Patrol      0.0069                 0
+               Wausau            Wisconsin          Standard Patrol      0.0067                 0
+          North Ogden                 Utah          Standard Patrol      0.0067                 0
+        North Reading        Massachusetts          Standard Patrol      0.0067                 0
+              Concord        Massachusetts          Standard Patrol      0.0065                 0
+            Maryville             Missouri          Standard Patrol      0.0065                 0
+     North Huntingdon         Pennsylvania          Standard Patrol      0.0064                 0
+          Westborough        Massachusetts          Standard Patrol      0.0064                 0
+             Westwood           New Jersey          Standard Patrol      0.0064                 0
+          Crown Point              Indiana          Standard Patrol      0.0064                 0
+         Lincoln Park           New Jersey          Standard Patrol      0.0063                 0
+                 Penn         Pennsylvania          Standard Patrol      0.0063                 0
+        Scotch Plains           New Jersey          Standard Patrol      0.0062                 0
+             Danville           California          Standard Patrol      0.0062                 0
+               Exeter        New Hampshire          Standard Patrol      0.0062                 0
+          Cinnaminson           New Jersey          Standard Patrol      0.0061                 0
+            Goffstown        New Hampshire          Standard Patrol      0.0061                 0
+            Wilbraham        Massachusetts          Standard Patrol      0.0061                 0
+           Shrewsbury        Massachusetts          Standard Patrol      0.0061                 0
+                Sandy                 Utah          Standard Patrol      0.0060                 0
+            Lexington        Massachusetts          Standard Patrol      0.0060                 0
+               Center         Pennsylvania          Standard Patrol      0.0060                 0
+         Wethersfield          Connecticut          Standard Patrol      0.0058                 0
+            Caledonia            Wisconsin          Standard Patrol      0.0058                 0
+            Brookings         South Dakota          Standard Patrol      0.0058                 0
+               Gorham                Maine          Standard Patrol      0.0057                 0
+               Emmaus         Pennsylvania          Standard Patrol      0.0057                 0
+           Bettendorf                 Iowa          Standard Patrol      0.0057                 0
+            Wauwatosa            Wisconsin          Standard Patrol      0.0056                 0
+      West Manchester         Pennsylvania          Standard Patrol      0.0055                 0
+              Andover        Massachusetts          Standard Patrol      0.0054                 0
+              Ballwin             Missouri          Standard Patrol      0.0052                 0
+           Smithfield         Rhode Island          Standard Patrol      0.0052                 0
+       North Branford          Connecticut          Standard Patrol      0.0051                 0
+          Haddonfield           New Jersey          Standard Patrol      0.0050                 0
+               Marple         Pennsylvania          Standard Patrol      0.0050                 0
+              Warwick         Pennsylvania          Standard Patrol      0.0050                 0
+               Carmel              Indiana          Standard Patrol      0.0050                 0
+               Summit           New Jersey          Standard Patrol      0.0049                 0
+            Urbandale                 Iowa          Standard Patrol      0.0049                 0
+           Oconomowoc            Wisconsin          Standard Patrol      0.0049                 0
+           Portsmouth         Rhode Island          Standard Patrol      0.0048                 0
+              Evesham           New Jersey          Standard Patrol      0.0047                 0
+         Strongsville                 Ohio          Standard Patrol      0.0047                 0
+              Sudbury        Massachusetts          Standard Patrol      0.0047                 0
+          North Haven          Connecticut          Standard Patrol      0.0046                 0
+               Monroe          Connecticut          Standard Patrol      0.0046                 0
+             Ringwood           New Jersey          Standard Patrol      0.0045                 0
+              Hanover           New Jersey          Standard Patrol      0.0045                 0
+            Manalapan           New Jersey          Standard Patrol      0.0045                 0
+            Glen Rock           New Jersey          Standard Patrol      0.0045                 0
+       Lower Moreland         Pennsylvania          Standard Patrol      0.0044                 0
+              Muskego            Wisconsin          Standard Patrol      0.0044                 0
+           Doylestown         Pennsylvania          Standard Patrol      0.0044                 0
+              Newtown          Connecticut          Standard Patrol      0.0043                 0
+              Oakland           New Jersey          Standard Patrol      0.0043                 0
+      Paradise Valley              Arizona          Standard Patrol      0.0043                 0
+         East Hampton          Connecticut          Standard Patrol      0.0042                 0
+        American Fork                 Utah          Standard Patrol      0.0041                 0
+             Denville           New Jersey          Standard Patrol      0.0040                 0
+               Mequon            Wisconsin          Standard Patrol      0.0039                 0
+              Hampden         Pennsylvania          Standard Patrol      0.0038                 0
+               Verona           New Jersey          Standard Patrol      0.0038                 0
+               Darien          Connecticut          Standard Patrol      0.0037                 0
+               Warren           New Jersey          Standard Patrol      0.0036                 0
+           Brookfield            Wisconsin          Standard Patrol      0.0032                 0
+             Bernards           New Jersey          Standard Patrol      0.0032                 0
+
+OUTPUTS SAVED:
+  p25_threshold_sweep.png
+  p25_calibration.png
+  p25_dispatch_cost.png
+  p25_final_dispatch_tiers.csv
+  p25_final_report.txt

@@ -15,13 +15,14 @@ Saves to data/processed/:
     Y1_hat_train.npy   shape (1595, 4) — Stage 2 training input
     Y1_hat_test.npy    shape (399,  4) — Stage 2 test input (for p25_test.py)
 
-Saves to outputs/p25_outputs/:
+Saves to outputs/training/:
     p25_stage1_results.txt
 =============================================================================
 """
 
 import os, sys, time
 import numpy as np
+import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -32,7 +33,7 @@ from sklearn.model_selection import cross_val_score
 # ── paths ────────────────────────────────────────────────────────────────────
 ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PROC = os.path.join(ROOT, "data", "processed")
-OUT_DIR   = os.path.join(ROOT, "outputs", "p25_outputs")
+OUT_DIR   = os.path.join(ROOT, "outputs", "training")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def load(name):
@@ -195,6 +196,32 @@ np.save(os.path.join(DATA_PROC, "Y1_hat_test.npy"),  Y1_hat_test)
 print(f"  Y1_hat_train.npy : {Y1_hat_train.shape}  → Stage 2 training input")
 print(f"  Y1_hat_test.npy  : {Y1_hat_test.shape}   → Stage 2 test input (p25_test.py)")
 print(f"  Column order     : LinReg | Ridge | RF | GBM")
+
+meta_test_path = os.path.join(DATA_PROC, "community_metadata_test.csv")
+if os.path.exists(meta_test_path):
+    meta_test = pd.read_csv(meta_test_path).reset_index(drop=True)
+    if len(meta_test) == len(Y1_hat_test):
+        y1hat_meta = pd.concat(
+            [
+                meta_test[["city", "state"]],
+                pd.DataFrame(
+                    Y1_hat_test,
+                    columns=["LinReg_Y1hat", "Ridge_Y1hat", "RF_Y1hat", "GBM_Y1hat"],
+                ),
+            ],
+            axis=1,
+        )
+        y1hat_meta.to_csv(
+            os.path.join(DATA_PROC, "Y1_hat_test_with_metadata.csv"),
+            index=False,
+        )
+        print(f"  Y1_hat_test_with_metadata.csv saved")
+        print(f"  Columns           : city | state | LinReg_Y1hat | Ridge_Y1hat | RF_Y1hat | GBM_Y1hat")
+    else:
+        print(f"  [WARN] community_metadata_test.csv rows do not match Y1_hat_test")
+else:
+    print(f"  [WARN] community metadata not found; run p25_split.py to create it")
+
 print(f"\n  Y1_hat range check (all should be in [0,1]):")
 col_names = ["LinReg", "Ridge ", "RF    ", "GBM   "]
 for j, cn in enumerate(col_names):

@@ -1,0 +1,47 @@
+P25 EDA SUMMARY REPORT
+============================================================
+Stage 1 input : 1994 rows x 101 cols
+Stage 2 base  : 1994 rows x 8 cols
+
+Status  Check
+------------------------------------------------------------
+PASS    Stage 1: zero missing
+PASS    Stage 2: zero missing
+WARN    Y1 right-skewed (skew=1.52)
+        -> log1p applied for LR/Ridge → skew improves to 1.17
+WARN    log1p(Y1) still skewed (1.17) — RF/GBM will handle better
+WARN    Imbalanced (15.4% positive, 5.5:1)
+        -> Use class_weight='balanced'. Primary metrics: AUC + Recall (not accuracy)
+WARN    Moderate multicollinearity (12 pairs |r|>0.85)
+        -> Ridge will likely outperform plain LinearRegression
+PASS    Strong correlations (max |r|=0.738) — linear models should perform well
+WARN    Heteroscedasticity confirmed (BP p=7.71e-58)
+        -> log1p(Y1) applied for LR + Ridge. RF/GBM train on raw Y1 — unaffected.
+WARN    Moderate outlier rate (5.5%)
+        -> Ridge L2 mitigates their effect on linear models.
+WARN    D2 skewed features: ['state_murder_rate']
+        -> GBM/RF handle this natively. LogReg may be marginally affected.
+PASS    D2 features in [0,1] range (min=0.0000, max=1.0000)
+PASS    Strong class separation (d=2.32, p=0.00e+00)
+        -> Y1_hat will be a highly informative bridge feature for Stage 2
+PASS    Strong Y1-Y2 correlation (r=0.838) — Y1_hat is a valid bridge
+
+KEY FINDINGS:
+  Y1 skew raw          : 1.5226
+  Y1 skew log1p        : 1.1747
+  Heteroscedasticity   : BP p=7.71e-58 (confirmed)
+  Y2 class balance     : 15.4% positive (5.5:1 imbalance)
+  Multicollinear pairs : 12 with |r| > 0.85
+  Y1 outliers          : 110 (5.5%)
+  r(Y1, Y2)            : 0.8381
+  Cohen's d (Y1 sep.)  : 2.3186
+
+MODELLING IMPLICATIONS:
+  1. log1p(Y1) for LinearRegression + Ridge only
+  2. class_weight='balanced' in ALL Stage 2 classifiers
+  3. Ridge justified by 12 multicollinear pairs
+  4. RF/GBM justified by heteroscedasticity + outliers
+  5. Primary metrics: AUC + Recall (NOT accuracy)
+  6. Y1_hat is a valid bridge (r=0.838, d=2.32)
+
+TRAINING VERDICT: APPROVED

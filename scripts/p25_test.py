@@ -9,7 +9,7 @@ it only evaluates performance on the held-out test set.
 Run AFTER p25_train2.py:
     python scripts/p25_test.py
 
-Outputs → outputs/p25_outputs/:
+Outputs → outputs/test/ and outputs/reports/:
     p25_test_stage1_scatter.png        actual vs predicted for all 4 regressors
     p25_test_stage1_importance.png     top feature importances (RF/GBM)
     p25_test_stage2_confusion.png      confusion matrix for all 4 classifiers
@@ -18,11 +18,13 @@ Outputs → outputs/p25_outputs/:
     p25_test_pipeline_comparison.png   baseline LogReg vs full two-stage
     p25_test_feature_importance_s2.png which of the 11 Stage 2 features matter
     p25_test_report.txt                full numeric summary
+    p25_test_dispatch_tiers.csv        city/state/dispatch tier table
 =============================================================================
 """
 
 import os, sys, warnings
 import numpy as np
+import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -45,14 +47,32 @@ warnings.filterwarnings("ignore")
 # ── paths ───────────────────────────────────────────────────────────────────
 ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PROC = os.path.join(ROOT, "data", "processed")
-OUT_DIR   = os.path.join(ROOT, "outputs", "p25_outputs")
-os.makedirs(OUT_DIR, exist_ok=True)
+TEST_DIR  = os.path.join(ROOT, "outputs", "test")
+REPORT_DIR = os.path.join(ROOT, "outputs", "reports")
+os.makedirs(TEST_DIR, exist_ok=True)
+os.makedirs(REPORT_DIR, exist_ok=True)
 
 # ── colours ─────────────────────────────────────────────────────────────────
 CB = "#2E75B6"; CG = "#1E5C2E"; CO = "#C55A11"
 CR = "#9B1C1C"; CP = "#5B2C8D"; CGR = "#7F7F7F"
 S1_COLORS = [CB, CG, CO, CP]
 S2_COLORS = [CB, CG, CO, CR]
+
+STATE_NAMES = {
+    1: "Alabama", 2: "Alaska", 4: "Arizona", 5: "Arkansas",
+    6: "California", 8: "Colorado", 9: "Connecticut", 10: "Delaware",
+    11: "District of Columbia", 12: "Florida", 13: "Georgia", 15: "Hawaii",
+    16: "Idaho", 17: "Illinois", 18: "Indiana", 19: "Iowa",
+    20: "Kansas", 21: "Kentucky", 22: "Louisiana", 23: "Maine",
+    24: "Maryland", 25: "Massachusetts", 26: "Michigan", 27: "Minnesota",
+    28: "Mississippi", 29: "Missouri", 30: "Montana", 31: "Nebraska",
+    32: "Nevada", 33: "New Hampshire", 34: "New Jersey", 35: "New Mexico",
+    36: "New York", 37: "North Carolina", 38: "North Dakota", 39: "Ohio",
+    40: "Oklahoma", 41: "Oregon", 42: "Pennsylvania", 44: "Rhode Island",
+    45: "South Carolina", 46: "South Dakota", 47: "Tennessee", 48: "Texas",
+    49: "Utah", 50: "Vermont", 51: "Virginia", 53: "Washington",
+    54: "West Virginia", 55: "Wisconsin", 56: "Wyoming",
+}
 
 def load(name):
     path = os.path.join(DATA_PROC, f"{name}.npy")
@@ -63,10 +83,63 @@ def load(name):
     return np.load(path, allow_pickle=True)
 
 def save_fig(fig, name):
-    path = os.path.join(OUT_DIR, name)
+    path = os.path.join(TEST_DIR, name)
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"  [SAVED] {name}")
+
+def clean_community_name(name):
+    import re
+    name = str(name).replace("_", " ").strip()
+    for suffix in [
+        "city", "township", "town", "borough", "village",
+        "municipality", "county", "urbancounty",
+    ]:
+        if name.lower().endswith(suffix):
+            name = name[:-len(suffix)]
+            break
+    name = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", name)
+    name = re.sub(r"\s+", " ", name).strip()
+    return name.title() if name else "Unknown"
+
+def load_test_metadata():
+    meta_path = os.path.join(DATA_PROC, "community_metadata_test.csv")
+    if os.path.exists(meta_path):
+        return pd.read_csv(meta_path)
+
+    raw_path = os.path.join(ROOT, "data", "raw", "communities.data")
+    test_idx_path = os.path.join(DATA_PROC, "test_idx.npy")
+    if not os.path.exists(raw_path) or not os.path.exists(test_idx_path):
+        return pd.DataFrame({
+            "row_id": np.arange(len(Y2_test)),
+            "city": [f"test_row_{i}" for i in range(len(Y2_test))],
+            "state": ["Unknown"] * len(Y2_test),
+        })
+
+    test_idx = np.load(test_idx_path, allow_pickle=True)
+    raw_meta = pd.read_csv(
+        raw_path,
+        header=None,
+        usecols=[0, 3],
+        names=["state_code", "community_raw"],
+        na_values=["?"],
+    )
+    metadata = pd.DataFrame({
+        "row_id": np.arange(len(raw_meta)),
+        "city": raw_meta["community_raw"].map(clean_community_name),
+        "state_code": raw_meta["state_code"].astype("Int64"),
+    })
+    metadata["state"] = metadata["state_code"].map(STATE_NAMES).fillna(
+        metadata["state_code"].astype(str)
+    )
+    return metadata.iloc[test_idx].reset_index(drop=True)
+
+def dispatch_tier(probability):
+    if probability >= 0.80:
+        return "Level-1: Full Deployment"
+    if probability >= 0.50:
+        return "Level-2: Standby"
+    return "Standard Patrol"
 
 print("\n" + "="*65)
 print("  P25 — Comprehensive Test Evaluation")
@@ -138,6 +211,10 @@ for cfg in S1_MODELS:
     print(f"  {cfg['name']:<22} Test R²={cfg['test_r2']:.4f}  "
           f"RMSE={cfg['test_rmse']:.4f}")
 
+best_s1 = max(S1_MODELS, key=lambda r: r["test_r2"])
+print(f"  -> Stage 1 winner on test set: {best_s1['name']} "
+      f"(highest Test R² among the 4 Stage 1 models)")
+
 # Stage 2 models
 S2_MODELS = [
     {"name": "LogisticRegression", "short": "LogReg",
@@ -182,9 +259,52 @@ bl_rec   = recall_score(Y2_test, bl_preds)
 
 best_s2  = max(S2_MODELS, key=lambda r: r["auc"])
 print(f"\n  Baseline (D1 only LogReg): AUC={bl_auc:.4f}  Recall={bl_rec:.4f}")
-print(f"  Best two-stage model     : AUC={best_s2['auc']:.4f}  "
-      f"Recall={best_s2['rec']:.4f}")
+print(f"  Best two-stage model     : {best_s2['name']}  "
+      f"AUC={best_s2['auc']:.4f}  Recall={best_s2['rec']:.4f}")
 print(f"  AUC lift                 : {best_s2['auc']-bl_auc:+.4f}")
+print(f"  -> Final dispatch tiers use Stage 2 winner: {best_s2['name']}")
+
+test_metadata = load_test_metadata().reset_index(drop=True)
+if len(test_metadata) != len(Y2_test):
+    print(f"  [WARN] Metadata rows={len(test_metadata)} but test rows={len(Y2_test)}")
+    test_metadata = pd.DataFrame({
+        "row_id": np.arange(len(Y2_test)),
+        "city": [f"test_row_{i}" for i in range(len(Y2_test))],
+        "state": ["Unknown"] * len(Y2_test),
+    })
+
+dispatch_table = test_metadata[["city", "state"]].copy()
+dispatch_table["p_emergency"] = best_s2["proba"]
+dispatch_table["dispatch_tier"] = dispatch_table["p_emergency"].map(dispatch_tier)
+dispatch_table["actual_emergency"] = Y2_test
+dispatch_table["predicted_emergency"] = best_s2["preds"]
+dispatch_table["tier_rank"] = dispatch_table["dispatch_tier"].map({
+    "Level-1: Full Deployment": 1,
+    "Level-2: Standby": 2,
+    "Standard Patrol": 3,
+})
+dispatch_table = dispatch_table.sort_values(
+    ["tier_rank", "p_emergency", "state", "city"],
+    ascending=[True, False, True, True],
+).drop(columns=["tier_rank"])
+
+dispatch_csv = os.path.join(REPORT_DIR, "p25_test_dispatch_tiers.csv")
+dispatch_table.to_csv(dispatch_csv, index=False)
+print(f"  [SAVED] p25_test_dispatch_tiers.csv")
+
+dispatch_table_display = dispatch_table.copy()
+dispatch_table_display["p_emergency"] = dispatch_table_display["p_emergency"].map(
+    lambda x: f"{x:.4f}"
+)
+l1_table = dispatch_table_display[
+    dispatch_table_display["dispatch_tier"] == "Level-1: Full Deployment"
+][["city", "state", "dispatch_tier"]]
+l2_table = dispatch_table_display[
+    dispatch_table_display["dispatch_tier"] == "Level-2: Standby"
+][["city", "state", "dispatch_tier"]]
+standard_table = dispatch_table_display[
+    dispatch_table_display["dispatch_tier"] == "Standard Patrol"
+][["city", "state", "dispatch_tier"]]
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -481,6 +601,14 @@ for cfg in S2_MODELS:
 
 lines += [
     "",
+    "MODEL SELECTION USED FOR FINAL OUTPUT:",
+    f"  Stage 1 winner : {best_s1['name']}  "
+    f"(highest Test R² = {best_s1['test_r2']:.4f} among 4 Stage 1 models)",
+    f"  Stage 2 winner : {best_s2['name']}  "
+    f"(highest Test AUC = {best_s2['auc']:.4f} among 4 Stage 2 models)",
+    f"  Final dispatch table and CSV below are generated from the Stage 2 "
+    f"winner: {best_s2['name']}",
+    "",
     "PIPELINE COMPARISON:",
     f"  Baseline (D1 only LogReg) : AUC={bl_auc:.4f}  Recall={bl_rec:.4f}",
     f"  Best two-stage pipeline   : AUC={best_s2['auc']:.4f}  "
@@ -504,20 +632,43 @@ lines += [
     f"Ridge R²={[m for m in S1_MODELS if 'Ridge' in m['name']][0]['test_r2']:.4f}",
     f"  Heteroscedasticity → GBM/RF unaffected.",
     f"  5.5% outliers → Ridge/RF/GBM mitigate.",
+    "",
+    "DISPATCH TIER COUNTS:",
+    f"  Threshold L1 (P>=0.8) : {len(l1_table)} communities",
+    f"  Threshold L2 (P>=0.5) : {len(l2_table)} communities",
+    f"  Standard     (P<0.5)  : {len(standard_table)} communities",
+    "",
+    "DISPATCH TIER TABLE (test set, best Stage 2 model, thresholds 0.80/0.50):",
+    dispatch_table_display[["city", "state", "dispatch_tier", "p_emergency",
+                            "actual_emergency", "predicted_emergency"]].to_string(index=False),
+    "",
+    "CSV OUTPUT:",
+    "  p25_test_dispatch_tiers.csv",
 ]
 
-with open(os.path.join(OUT_DIR, "p25_test_report.txt"), "w") as f:
+with open(os.path.join(REPORT_DIR, "p25_test_report.txt"), "w") as f:
     f.write("\n".join(lines))
 print("  [SAVED] p25_test_report.txt")
+
+print("\n[5/5] Final dispatch tier output...")
+print(f"  Stage 1 model selected   : {best_s1['name']} "
+      f"(outperformed the other 3 by Test R²)")
+print(f"  Stage 2 model selected   : {best_s2['name']} "
+      f"(outperformed the other 3 by Test AUC)")
+print(f"  Final dispatch table uses: {best_s2['name']}")
+print(f"  Threshold L1 (P≥0.8) : {len(l1_table):>4} communities")
+print(f"  Threshold L2 (P≥0.5) : {len(l2_table):>4} communities")
+print(f"  Standard     (P<0.5)  : {len(standard_table):>4} communities")
+print("\n  City / State / Dispatch Tier table:")
+print(dispatch_table_display[["city", "state", "dispatch_tier"]].to_string(index=False))
 
 print("\n" + "="*65)
 print("  Test evaluation complete!")
 print()
-print(f"  Best Stage 1 : "
-      f"{max(S1_MODELS,key=lambda m:m['test_r2'])['name']}  "
-      f"R²={max(S1_MODELS,key=lambda m:m['test_r2'])['test_r2']:.4f}")
+print(f"  Best Stage 1 : {best_s1['name']}  R²={best_s1['test_r2']:.4f}")
 print(f"  Best Stage 2 : {best_s2['name']}  AUC={best_s2['auc']:.4f}")
 print(f"  AUC lift vs baseline : {best_s2['auc']-bl_auc:+.4f}")
 print()
-print("  Outputs → outputs/p25_outputs/")
+print("  Test plots   → outputs/test/")
+print("  Test reports → outputs/reports/")
 print("="*65 + "\n")

@@ -15,13 +15,14 @@ Saves to data/processed/:
     stage2_final_train.npy   (1595, 12) — 11 features + Y2 label
     stage2_final_test.npy    (399, 12)  — built for p25_test.py
 
-Saves to outputs/p25_outputs/:
+Saves to outputs/training/:
     p25_stage2_results.txt
 =============================================================================
 """
 
 import os, sys, time
 import numpy as np
+import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -34,7 +35,7 @@ from sklearn.utils.class_weight import compute_sample_weight
 # ── paths ────────────────────────────────────────────────────────────────────
 ROOT      = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PROC = os.path.join(ROOT, "data", "processed")
-OUT_DIR   = os.path.join(ROOT, "outputs", "p25_outputs")
+OUT_DIR   = os.path.join(ROOT, "outputs", "training")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def load(name):
@@ -96,6 +97,26 @@ np.save(os.path.join(DATA_PROC, "stage2_final_test.npy"),
         S2_test)   # no label here — p25_test.py loads Y2_test separately
 print(f"  stage2_final_train.npy saved")
 print(f"  stage2_final_test.npy  saved")
+
+meta_test_path = os.path.join(DATA_PROC, "community_metadata_test.csv")
+if os.path.exists(meta_test_path):
+    meta_test = pd.read_csv(meta_test_path).reset_index(drop=True)
+    if len(meta_test) == len(S2_test):
+        stage2_cols = all_feat
+        stage2_meta = pd.concat(
+            [meta_test[["city", "state"]], pd.DataFrame(S2_test, columns=stage2_cols)],
+            axis=1,
+        )
+        stage2_meta.to_csv(
+            os.path.join(DATA_PROC, "stage2_final_test_with_metadata.csv"),
+            index=False,
+        )
+        print(f"  stage2_final_test_with_metadata.csv saved")
+        print(f"  Columns                         : city | state | 11 Stage 2 features")
+    else:
+        print(f"  [WARN] community_metadata_test.csv rows do not match Stage 2 test rows")
+else:
+    print(f"  [WARN] community metadata not found; run p25_split.py to create it")
 
 # ════════════════════════════════════════════════════════════════════════════
 # CLASS IMBALANCE SETUP
