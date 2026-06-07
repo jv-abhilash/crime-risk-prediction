@@ -46,6 +46,11 @@ requirements_frozen.txt
 .env
 *.env
 
+*.docx
+*/*.docx
+*.pdf
+*/*.pdf
+
 # Pytest
 .pytest_cache/
 htmlcov/
