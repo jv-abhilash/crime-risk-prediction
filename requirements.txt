@@ -2,26 +2,41 @@
 # P25 — Two-Stage Crime Risk & Emergency Activation Pipeline
 # Requirements
 # ============================================================
+# Install:  pip install -r requirements.txt
+# Freeze:   pip freeze > requirements_frozen.txt
+# ============================================================
 
-# Core data handling
-pandas>=1.5.0
-numpy>=1.23.0
+# ── Core data handling ───────────────────────────────────────
+pandas>=2.0.0
+numpy>=1.24.0
 
-# Machine learning
-scikit-learn>=1.1.0
+# ── Machine learning ─────────────────────────────────────────
+scikit-learn>=1.2.0
 
-# Statistical diagnostics (Breusch-Pagan test)
+# Model persistence — used directly in train1, train2, test,
+# inference (joblib.dump / joblib.load)
+joblib>=1.2.0
+
+# ── Statistical diagnostics ──────────────────────────────────
+# Breusch-Pagan heteroscedasticity test in p25_eda.py
 statsmodels>=0.13.0
 
-# Visualisation
+# ── Visualisation (pipeline scripts) ─────────────────────────
 matplotlib>=3.6.0
 
-# Scientific computing
+# ── Scientific computing ─────────────────────────────────────
 scipy>=1.9.0
 
-# Jupyter notebooks (optional — for EDA exploration)
+# ── Streamlit app (app.py) ───────────────────────────────────
+streamlit>=1.28.0
+
+# Interactive charts in the Streamlit dashboard
+plotly>=5.15.0
+
+# ── Development / exploration ─────────────────────────────────
+# Jupyter notebooks for EDA exploration (optional)
 jupyter>=1.0.0
 ipykernel>=6.0.0
 
-# Progress bars (optional — for model training loops)
+# Progress bars in training loops (optional)
 tqdm>=4.64.0
